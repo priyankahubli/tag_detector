@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  OpenCV
+  cv_bridge
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
+# find_package(Boost REQUIRED COMPONENTS system))
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -118,6 +120,8 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+${OpenCV_INCLUDE_DIRS}
+
 )
 
 ## Declare a C++ library
@@ -197,3 +201,10 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(get_images src/get_images.cpp)
+target_link_libraries(get_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
+#add_dependencies(get_images tag_detector_generate_messages_cpp)
+
+add_executable(process_vid src/process_vid.cpp)
+target_link_libraries(process_vid ${catkin_LIBRARIES} ${OpenCV_LIBS})
