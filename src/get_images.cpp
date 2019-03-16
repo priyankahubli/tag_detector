@@ -55,7 +55,6 @@ int ImagePublisher::setBlurWindowSize(int& arg2)
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "get_images");
-  ros::NodeHandle nh;
 
 	if (argv[1] == NULL && argv[2] == NULL)
 	{
