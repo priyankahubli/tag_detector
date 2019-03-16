@@ -135,7 +135,7 @@ cv::Mat ProcessVideo::DeblurImage(const cv::Mat& img)
 	Mat img_sharp;
 	float kernel_values[10] = { 0, -1/4, 0, -1/4,
                                8/4, -1/4, 0, -1/4, 0};
-	cv::Mat kernel = cv::Mat(3, 3, CV_8U, dummy_query_data);
+	cv::Mat kernel = cv::Mat(3, 3, CV_8U, kernel_values);
     filter2D(img, img_sharp, -1, kernel);
 
 	return img+img_sharp;

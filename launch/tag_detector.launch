@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<launch>
+  
+  <arg name="video_path" />
+  <arg name="kernel_size"/>
+  
+  <node name ="get_kernel_size" pkg = "tag_detector" type = "kernel_size_server" output = "screen"/>
+  
+  <node name ="get_images" pkg = "tag_detector" type = "get_images" args = "$(arg video_path) $(arg kernel_size)" output = "screen"/>
+  
+  <node name ="video_processor" pkg = "tag_detector" type = "process_vid" output = "screen"/>
+
+</launch>

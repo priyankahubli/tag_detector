@@ -61,6 +61,10 @@ int main(int argc, char **argv)
 		cerr << "No video path or blurring window size given" << endl;
 		return -1;		
 	}
+  cout << "video path =   " << argv[1] << endl;
+  //cout << argv[2]<< endl;
+  //cout << argv[4]<< endl;
+  //cout << argv[4]<< endl;
 
 	VideoCapture vid(argv[1]); 
 
