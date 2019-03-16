@@ -20,6 +20,7 @@ void ProcessVideo::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
 	// If not published, close the window displaying the video and shutdown the node. 
 	else 
 	{
+		Mat img_sharp;
 		ros::Time start_, end_;
 		// Start timer to calculate computation time for detection and visualization
 		start_ = ros::Time::now();
@@ -27,8 +28,20 @@ void ProcessVideo::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
 		// Convert sensor_msgs/Image to cv::Mat format 
 		Mat img = cv_bridge::toCvShare(msg, "bgr8")->image;
 
+		// Evaluate sharpness 
+		bool is_blur = ProcessVideo::EvaluateSharpness(img);
+
+		if (is_blur)
+		{
+			img_sharp = ProcessVideo::DeblurImage(img);
+		}
+		else
+		{
+			img_sharp = img.clone();
+		}
+
 		// Detect and visualize rectangles around april tags. 
-		ProcessVideo::DetectTags(img);		
+		ProcessVideo::DetectTags(img_sharp);		
 
 		// Stop the timer
 		end_ = ros::Time::now();
@@ -73,6 +86,60 @@ void ProcessVideo::DetectTags(const cv::Mat& img)
 	imshow("view", img);
 	waitKey(1);
 	return;
+};
+
+bool ProcessVideo::EvaluateSharpness(const cv::Mat& img)
+{
+	double min, max;
+	Mat img_gray, dst;
+
+	// Convert color image to gray 	
+	cvtColor(img, img_gray, CV_BGR2GRAY);
+
+	Mat planes[] = {Mat_<float>(img_gray), Mat::zeros(img_gray.size(), CV_32F)};
+
+    //Complex plane to contain the DFT coefficients {[0]-Real,[1]-Img}
+    Mat complexI;    
+    
+    merge(planes, 2, complexI);
+    dft(complexI, complexI);  
+
+    // compute magnitude
+    split(complexI, planes);
+    magnitude(planes[0], planes[1], planes[0]);
+    Mat magI = planes[0];
+    
+    // Switch to logarithmic scale
+    magI += Scalar::all(1);                    
+	log(magI, magI);
+
+	minMaxLoc(magI, &min, &max);
+
+	// Count the number of pixels displaying high frequencies 
+	int threshold_value = (max - min) / 2;
+	threshold(magI, dst, threshold_value, 255, THRESH_BINARY);
+	int num_high_freqs = countNonZero(dst);
+	
+	// If more than 5% of the pixels have high frequencies then we consider the image to be blurry. 
+	if (num_high_freqs > (0.05*magI.rows*magI.cols))
+			return false;
+	
+	return true;
+
+};
+
+cv::Mat ProcessVideo::DeblurImage(const cv::Mat& img)
+{
+	// Ideally would like to apply the weiner filter to deblur the image. 
+	
+	Mat img_sharp;
+	float kernel_values[10] = { 0, -1/4, 0, -1/4,
+                               8/4, -1/4, 0, -1/4, 0};
+	cv::Mat kernel = cv::Mat(3, 3, CV_8U, dummy_query_data);
+    filter2D(img, img_sharp, -1, kernel);
+
+	return img+img_sharp;
+
 };
 
 int main(int argc, char **argv)
