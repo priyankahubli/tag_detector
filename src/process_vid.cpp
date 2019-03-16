@@ -20,40 +20,59 @@ void ProcessVideo::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
 	// If not published, close the window displaying the video and shutdown the node. 
 	else 
 	{
+		ros::Time start_, end_;
+		// Start timer to calculate computation time for detection and visualization
+		start_ = ros::Time::now();
 
+		// Convert sensor_msgs/Image to cv::Mat format 
 		Mat img = cv_bridge::toCvShare(msg, "bgr8")->image;
-		// Convert color image to gray 
-		Mat img_gray, img_bw;
-		cvtColor(img, img_gray, CV_BGR2GRAY);
 
-		// Threshold gray image to black and white
-		threshold(img_gray, img_bw,127,255,CV_THRESH_BINARY);
-		// Apply Canny edge detector
-		Canny(img_bw, img_bw, 50, 100, 3);
+		// Detect and visualize rectangles around april tags. 
+		ProcessVideo::DetectTags(img);		
 
-		vector<vector<Point> > contours;
-    	vector<Vec4i> hierarchy;
-    	vector<Point> approx;
+		// Stop the timer
+		end_ = ros::Time::now();
 
-    	// Find Contours 
-    	findContours(img_bw, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-
-    	// Visualize the detections using drawContours
-    	for (int i = 0; i< contours.size(); i++)
-	    {
-            approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
-            // Since we want to detect the squares/rectangle of the april tags, we consider only contours with 4 vertices
-			if( approx.size() == 4)
-			{
-				Scalar color = Scalar(rand()%255,rand()%255,rand()%255);
-				drawContours(img, contours, i, color, 2, 8, hierarchy, 0, Point());
-			}
-		}  
-    	
-		imshow("view", img);
-		waitKey(30);
+		// Calculate computation time and display
+		double computation_time = (end_ - start_).toNSec() * 1e-6;
+		cout << "Computation time (ms): " << computation_time << endl;
 
 	}
+};
+
+void ProcessVideo::DetectTags(const cv::Mat& img)
+{
+	Mat img_gray, img_bw;
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	vector<Point> approx;
+
+	// Convert color image to gray 
+	cvtColor(img, img_gray, CV_BGR2GRAY);
+
+	// Threshold gray image to black and white
+	threshold(img_gray, img_bw,127,255,CV_THRESH_BINARY);
+	// Apply Canny edge detector
+	Canny(img_bw, img_bw, 50, 100, 3);
+
+	// Find Contours 
+	findContours(img_bw, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	// Visualize the detections using drawContours
+	for (int i = 0; i< contours.size(); i++)
+    {
+        approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+        // Since we want to detect the squares/rectangle of the april tags, we consider only contours with 4 vertices
+		if( approx.size() == 4)
+		{
+			Scalar color = Scalar(rand()%255,rand()%255,rand()%255);
+			drawContours(img, contours, i, color, 2, 8, hierarchy, 0, Point());
+		}
+	}  
+	
+	imshow("view", img);
+	waitKey(1);
+	return;
 };
 
 int main(int argc, char **argv)

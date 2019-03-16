@@ -24,7 +24,12 @@ public:
 	
 	void imageCallBack(const sensor_msgs::ImageConstPtr& msg);
 	/* Args: The message published by the topic this is subscribing to. 
-	This function is called whenever a new message arrives and it displays the msgs in a window. */
+	This function is called whenever a new message arrives, it calls a function to detect the squares of the april tags, and
+	draw around those contours. */
+
+	void DetectTags(const cv::Mat& img);
+	/* Args: img of type cv::Mat. 
+	It detects the squares of the april tags and draws around these contours */
 
 };
 
